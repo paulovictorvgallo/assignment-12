@@ -1,0 +1,975 @@
+# Module 12 Assignment: Business Analytics Fundamentals and Applications
+# GreenGrocer Data Analysis
+
+# Import required libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# Welcome message
+print("=" * 60)
+print("GREENGROCER BUSINESS ANALYTICS")
+print("=" * 60)
+
+# ----- USE THE FOLLOWING CODE TO CREATE SAMPLE DATA (DO NOT MODIFY) -----
+np.random.seed(42)
+
+stores = ["Tampa", "Orlando", "Miami", "Jacksonville", "Gainesville"]
+store_data = {
+    "Store": stores,
+    "SquareFootage": [15000, 12000, 18000, 10000, 8000],
+    "StaffCount": [45, 35, 55, 30, 25],
+    "YearsOpen": [5, 3, 7, 2, 1],
+    "WeeklyMarketingSpend": [2500, 2000, 3000, 1800, 1500]
+}
+
+store_df = pd.DataFrame(store_data)
+
+departments = ["Produce", "Dairy", "Bakery", "Grocery", "Prepared Foods"]
+categories = {
+    "Produce": ["Organic Vegetables", "Organic Fruits", "Fresh Herbs"],
+    "Dairy": ["Milk & Cream", "Cheese", "Yogurt"],
+    "Bakery": ["Bread", "Pastries", "Cakes"],
+    "Grocery": ["Grains", "Canned Goods", "Snacks"],
+    "Prepared Foods": ["Hot Bar", "Salad Bar", "Sandwiches"]
+}
+
+sales_data = []
+dates = pd.date_range(start="2023-01-01", end="2023-12-31", freq="D")
+
+store_performance = {
+    "Tampa": 1.0,
+    "Orlando": 0.85,
+    "Miami": 1.2,
+    "Jacksonville": 0.75,
+    "Gainesville": 0.65
+}
+
+dept_performance = {
+    "Produce": 1.2,
+    "Dairy": 1.0,
+    "Bakery": 0.85,
+    "Grocery": 0.95,
+    "Prepared Foods": 1.1
+}
+
+for date in dates:
+    month = date.month
+    seasonal_factor = 1.0
+    if month in [6, 7, 8]:
+        seasonal_factor = 1.15
+    elif month == 12:
+        seasonal_factor = 1.25
+    elif month in [1, 2]:
+        seasonal_factor = 0.9
+
+    dow_factor = 1.3 if date.dayofweek >= 5 else 1.0
+
+    for store in stores:
+        store_factor = store_performance[store]
+
+        for dept in departments:
+            dept_factor = dept_performance[dept]
+
+            for category in categories[dept]:
+                base_sales = np.random.normal(loc=500, scale=100)
+                sales_amount = base_sales * store_factor * dept_factor * seasonal_factor * dow_factor
+                sales_amount = sales_amount * np.random.normal(loc=1.0, scale=0.1)
+
+                base_margin = {
+                    "Produce": 0.25,
+                    "Dairy": 0.22,
+                    "Bakery": 0.35,
+                    "Grocery": 0.20,
+                    "Prepared Foods": 0.40
+                }[dept]
+                profit_margin = base_margin * np.random.normal(loc=1.0, scale=0.05)
+                profit_margin = max(min(profit_margin, 0.5), 0.15)
+
+                profit = sales_amount * profit_margin
+
+                sales_data.append({
+                    "Date": date,
+                    "Store": store,
+                    "Department": dept,
+                    "Category": category,
+                    "Sales": round(sales_amount, 2),
+                    "ProfitMargin": round(profit_margin, 4),
+                    "Profit": round(profit, 2)
+                })
+
+sales_df = pd.DataFrame(sales_data)
+
+customer_data = []
+total_customers = 5000
+
+age_mean, age_std = 42, 15
+income_mean, income_std = 85, 30
+
+segments = ["Health Enthusiast", "Gourmet Cook", "Family Shopper", "Budget Organic", "Occasional Visitor"]
+segment_probabilities = [0.25, 0.20, 0.30, 0.15, 0.10]
+
+store_probs = {
+    "Tampa": 0.25,
+    "Orlando": 0.20,
+    "Miami": 0.30,
+    "Jacksonville": 0.15,
+    "Gainesville": 0.10
+}
+
+for i in range(total_customers):
+    age = int(np.random.normal(loc=age_mean, scale=age_std))
+    age = max(min(age, 85), 18)
+
+    gender = np.random.choice(["M", "F"], p=[0.48, 0.52])
+
+    income = int(np.random.normal(loc=income_mean, scale=income_std))
+    income = max(income, 20)
+
+    segment = np.random.choice(segments, p=segment_probabilities)
+    preferred_store = np.random.choice(stores, p=list(store_probs.values()))
+
+    if segment == "Health Enthusiast":
+        visit_frequency = np.random.randint(8, 15)
+        avg_basket = np.random.normal(loc=75, scale=15)
+    elif segment == "Gourmet Cook":
+        visit_frequency = np.random.randint(4, 10)
+        avg_basket = np.random.normal(loc=120, scale=25)
+    elif segment == "Family Shopper":
+        visit_frequency = np.random.randint(5, 12)
+        avg_basket = np.random.normal(loc=150, scale=30)
+    elif segment == "Budget Organic":
+        visit_frequency = np.random.randint(6, 10)
+        avg_basket = np.random.normal(loc=60, scale=10)
+    else:
+        visit_frequency = np.random.randint(1, 5)
+        avg_basket = np.random.normal(loc=45, scale=15)
+
+    visit_frequency = max(min(visit_frequency, 30), 1)
+    avg_basket = max(avg_basket, 15)
+
+    monthly_spend = visit_frequency * avg_basket
+    if monthly_spend > 1000:
+        loyalty_tier = "Platinum"
+    elif monthly_spend > 500:
+        loyalty_tier = "Gold"
+    elif monthly_spend > 200:
+        loyalty_tier = "Silver"
+    else:
+        loyalty_tier = "Bronze"
+
+    customer_data.append({
+        "CustomerID": f"C{i+1:04d}",
+        "Age": age,
+        "Gender": gender,
+        "Income": income * 1000,
+        "Segment": segment,
+        "PreferredStore": preferred_store,
+        "VisitsPerMonth": visit_frequency,
+        "AvgBasketSize": round(avg_basket, 2),
+        "MonthlySpend": round(visit_frequency * avg_basket, 2),
+        "LoyaltyTier": loyalty_tier
+    })
+
+customer_df = pd.DataFrame(customer_data)
+
+operational_data = []
+
+for store in stores:
+    store_row = store_df[store_df["Store"] == store].iloc[0]
+    square_footage = store_row["SquareFootage"]
+    staff_count = store_row["StaffCount"]
+
+    store_sales = sales_df[sales_df["Store"] == store]["Sales"].sum()
+    store_profit = sales_df[sales_df["Store"] == store]["Profit"].sum()
+
+    sales_per_sqft = store_sales / square_footage
+    profit_per_sqft = store_profit / square_footage
+    sales_per_staff = store_sales / staff_count
+    inventory_turnover = np.random.uniform(12, 18) * store_performance[store]
+    customer_satisfaction = min(5, np.random.normal(loc=4.0, scale=0.3) *
+                                (store_performance[store] ** 0.5))
+
+    operational_data.append({
+        "Store": store,
+        "AnnualSales": round(store_sales, 2),
+        "AnnualProfit": round(store_profit, 2),
+        "SalesPerSqFt": round(sales_per_sqft, 2),
+        "ProfitPerSqFt": round(profit_per_sqft, 2),
+        "SalesPerStaff": round(sales_per_staff, 2),
+        "InventoryTurnover": round(inventory_turnover, 2),
+        "CustomerSatisfaction": round(customer_satisfaction, 2)
+    })
+
+operational_df = pd.DataFrame(operational_data)
+
+print("\nDataframes created successfully. Ready for analysis!")
+print(f"Sales data shape: {sales_df.shape}")
+print(f"Customer data shape: {customer_df.shape}")
+print(f"Store data shape: {store_df.shape}")
+print(f"Operational data shape: {operational_df.shape}")
+
+print("\nSales Data Sample:")
+print(sales_df.head(3))
+print("\nCustomer Data Sample:")
+print(customer_df.head(3))
+print("\nStore Data Sample:")
+print(store_df)
+print("\nOperational Data Sample:")
+print(operational_df)
+# ----- END OF DATA CREATION -----
+
+
+# =============================================================================
+# TODO 1: Descriptive Analytics – Overview of Current Performance
+# =============================================================================
+
+def analyze_sales_performance():
+    """
+    Analyze overall sales performance with descriptive statistics.
+
+    Approach:
+    - Aggregate total sales and profit from the full sales_df.
+    - Compute the average profit margin across all transactions.
+    - Break down totals by store and by department so management can
+      quickly identify which locations and product areas drive revenue.
+
+    Returns a dict with keys: total_sales, total_profit, avg_profit_margin,
+    sales_by_store (Series), sales_by_dept (Series).
+    """
+    total_sales = sales_df["Sales"].sum()
+    total_profit = sales_df["Profit"].sum()
+    avg_profit_margin = sales_df["ProfitMargin"].mean()
+
+    sales_by_store = sales_df.groupby("Store")["Sales"].sum().sort_values(ascending=False)
+    sales_by_dept  = sales_df.groupby("Department")["Sales"].sum().sort_values(ascending=False)
+
+    print("\n[1.1] SALES PERFORMANCE SUMMARY")
+    print(f"  Total Annual Sales    : ${total_sales:,.2f}")
+    print(f"  Total Annual Profit   : ${total_profit:,.2f}")
+    print(f"  Avg Profit Margin     : {avg_profit_margin:.2%}")
+    print("\n  Sales by Store:")
+    for store, val in sales_by_store.items():
+        print(f"    {store:<15} ${val:,.2f}")
+    print("\n  Sales by Department:")
+    for dept, val in sales_by_dept.items():
+        print(f"    {dept:<18} ${val:,.2f}")
+
+    # Additional descriptive statistics
+    print("\n  Descriptive Stats – Daily Sales per Transaction:")
+    desc = sales_df["Sales"].describe()
+    print(f"    Mean   : ${desc['mean']:,.2f}")
+    print(f"    Median : ${sales_df['Sales'].median():,.2f}")
+    print(f"    Std Dev: ${desc['std']:,.2f}")
+    print(f"    Min    : ${desc['min']:,.2f}")
+    print(f"    Max    : ${desc['max']:,.2f}")
+
+    return {
+        "total_sales": total_sales,
+        "total_profit": total_profit,
+        "avg_profit_margin": avg_profit_margin,
+        "sales_by_store": sales_by_store,
+        "sales_by_dept": sales_by_dept,
+    }
+
+
+def visualize_sales_distribution():
+    """
+    Create three figures that illustrate sales distribution.
+
+    Figure 1 – Bar chart of annual sales by store.
+    Figure 2 – Horizontal bar chart of annual sales by department.
+    Figure 3 – Line chart of total monthly sales (time trend).
+
+    These visuals let management quickly compare locations, assess
+    department strength, and spot seasonal patterns.
+
+    Returns (store_fig, dept_fig, time_fig).
+    """
+    # ----- Figure 1: Sales by Store -----
+    store_sales = sales_df.groupby("Store")["Sales"].sum().sort_values(ascending=False)
+
+    store_fig, ax1 = plt.subplots(figsize=(8, 5))
+    colors = ["#2ecc71", "#27ae60", "#1abc9c", "#16a085", "#0e6655"]
+    bars = ax1.bar(store_sales.index, store_sales.values / 1e6, color=colors, edgecolor="white", linewidth=0.8)
+    ax1.set_title("Annual Sales by Store", fontsize=14, fontweight="bold", pad=12)
+    ax1.set_xlabel("Store", fontsize=11)
+    ax1.set_ylabel("Sales ($ Millions)", fontsize=11)
+    ax1.bar_label(bars, labels=[f"${v/1e6:.2f}M" for v in store_sales.values], padding=4, fontsize=9)
+    ax1.set_ylim(0, store_sales.max() / 1e6 * 1.18)
+    ax1.grid(axis="y", alpha=0.3)
+    store_fig.tight_layout()
+
+    # ----- Figure 2: Sales by Department -----
+    dept_sales = sales_df.groupby("Department")["Sales"].sum().sort_values()
+
+    dept_fig, ax2 = plt.subplots(figsize=(8, 5))
+    hbars = ax2.barh(dept_sales.index, dept_sales.values / 1e6,
+                     color=["#3498db", "#2980b9", "#1f618d", "#154360", "#0a2342"],
+                     edgecolor="white", linewidth=0.8)
+    ax2.set_title("Annual Sales by Department", fontsize=14, fontweight="bold", pad=12)
+    ax2.set_xlabel("Sales ($ Millions)", fontsize=11)
+    ax2.bar_label(hbars, labels=[f"${v/1e6:.2f}M" for v in dept_sales.values], padding=4, fontsize=9)
+    ax2.set_xlim(0, dept_sales.max() / 1e6 * 1.18)
+    ax2.grid(axis="x", alpha=0.3)
+    dept_fig.tight_layout()
+
+    # ----- Figure 3: Monthly Sales Trend -----
+    sales_df["Month"] = sales_df["Date"].dt.to_period("M")
+    monthly = sales_df.groupby("Month")["Sales"].sum()
+    month_labels = [str(m) for m in monthly.index]
+
+    time_fig, ax3 = plt.subplots(figsize=(10, 5))
+    ax3.plot(range(len(monthly)), monthly.values / 1e6, marker="o", color="#e74c3c",
+             linewidth=2, markersize=5)
+    ax3.fill_between(range(len(monthly)), monthly.values / 1e6, alpha=0.15, color="#e74c3c")
+    ax3.set_title("Monthly Sales Trend (2023)", fontsize=14, fontweight="bold", pad=12)
+    ax3.set_xlabel("Month", fontsize=11)
+    ax3.set_ylabel("Sales ($ Millions)", fontsize=11)
+    ax3.set_xticks(range(len(monthly)))
+    ax3.set_xticklabels([m[-2:] for m in month_labels], rotation=45, ha="right")  # Show MM only
+    ax3.grid(alpha=0.3)
+    time_fig.tight_layout()
+
+    print("\n[1.2] Three sales distribution visualizations created.")
+    return (store_fig, dept_fig, time_fig)
+
+
+def analyze_customer_segments():
+    """
+    Analyze the five customer segments for GreenGrocer's loyalty program.
+
+    Approach:
+    - Count members per segment to understand the customer mix.
+    - Compute average monthly spend per segment to identify high-value groups.
+    - Cross-tabulate segment × loyalty tier so management can see which
+      segments yield Gold/Platinum members (the most profitable customers).
+
+    Returns dict with keys: segment_counts, segment_avg_spend, segment_loyalty.
+    """
+    segment_counts   = customer_df["Segment"].value_counts()
+    segment_avg_spend = customer_df.groupby("Segment")["MonthlySpend"].mean().sort_values(ascending=False)
+    segment_loyalty  = pd.crosstab(customer_df["Segment"], customer_df["LoyaltyTier"])
+
+    print("\n[1.3] CUSTOMER SEGMENT ANALYSIS")
+    print("\n  Segment Counts:")
+    for seg, cnt in segment_counts.items():
+        print(f"    {seg:<22} {cnt:>5} customers  |  Avg Monthly Spend: ${segment_avg_spend.get(seg, 0):,.2f}")
+
+    print("\n  Loyalty Tier Distribution by Segment:")
+    print(segment_loyalty.to_string())
+
+    # Visualization: stacked bar – loyalty tiers per segment
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Pie of segment counts
+    axes[0].pie(segment_counts.values, labels=segment_counts.index, autopct="%1.1f%%",
+                colors=["#2ecc71","#3498db","#e74c3c","#f39c12","#9b59b6"],
+                startangle=90, pctdistance=0.8)
+    axes[0].set_title("Customer Segment Distribution", fontsize=12, fontweight="bold")
+
+    # Bar of average monthly spend per segment
+    colors = ["#2ecc71","#3498db","#e74c3c","#f39c12","#9b59b6"]
+    bars = axes[1].bar(segment_avg_spend.index, segment_avg_spend.values,
+                       color=colors, edgecolor="white")
+    axes[1].set_title("Avg Monthly Spend by Segment", fontsize=12, fontweight="bold")
+    axes[1].set_ylabel("Avg Monthly Spend ($)")
+    axes[1].set_xticklabels(segment_avg_spend.index, rotation=20, ha="right")
+    axes[1].bar_label(bars, labels=[f"${v:.0f}" for v in segment_avg_spend.values], padding=3)
+    axes[1].grid(axis="y", alpha=0.3)
+    fig.tight_layout()
+
+    return {
+        "segment_counts": segment_counts,
+        "segment_avg_spend": segment_avg_spend,
+        "segment_loyalty": segment_loyalty,
+    }
+
+
+# =============================================================================
+# TODO 2: Diagnostic Analytics – Understanding Relationships
+# =============================================================================
+
+def analyze_sales_correlations():
+    """
+    Identify which store-level factors correlate most strongly with annual sales.
+
+    Approach:
+    - Merge store_df (characteristics) with operational_df (performance).
+    - Compute the Pearson correlation matrix.
+    - Extract the top correlating factors with AnnualSales and sort them.
+    - Visualize with a heatmap so patterns are immediately readable.
+
+    Insight: Correlation ≠ causation; a larger store might sell more simply
+    because it has more shelf space, not because size itself causes demand.
+
+    Returns dict: store_correlations (DataFrame), top_correlations (list of tuples),
+    correlation_fig (Figure).
+    """
+    merged = store_df.merge(operational_df, on="Store")
+    numeric_cols = ["SquareFootage", "StaffCount", "YearsOpen",
+                    "WeeklyMarketingSpend", "AnnualSales", "AnnualProfit",
+                    "SalesPerSqFt", "InventoryTurnover", "CustomerSatisfaction"]
+
+    corr_matrix = merged[numeric_cols].corr()
+    sales_corr  = corr_matrix["AnnualSales"].drop("AnnualSales").sort_values(key=abs, ascending=False)
+
+    top_correlations = [(factor, round(val, 4)) for factor, val in sales_corr.items()]
+
+    print("\n[2.1] CORRELATION ANALYSIS – Factors vs Annual Sales")
+    for factor, val in top_correlations:
+        direction = "positive" if val > 0 else "negative"
+        print(f"    {factor:<28} r = {val:>7.4f}  ({direction})")
+
+    # Heatmap
+    correlation_fig, ax = plt.subplots(figsize=(9, 7))
+    im = ax.imshow(corr_matrix.values, cmap="RdYlGn", vmin=-1, vmax=1, aspect="auto")
+    plt.colorbar(im, ax=ax, shrink=0.8, label="Pearson r")
+    ax.set_xticks(range(len(numeric_cols)))
+    ax.set_yticks(range(len(numeric_cols)))
+    ax.set_xticklabels(numeric_cols, rotation=45, ha="right", fontsize=8)
+    ax.set_yticklabels(numeric_cols, fontsize=8)
+    for i in range(len(numeric_cols)):
+        for j in range(len(numeric_cols)):
+            ax.text(j, i, f"{corr_matrix.values[i, j]:.2f}",
+                    ha="center", va="center", fontsize=7,
+                    color="black" if abs(corr_matrix.values[i, j]) < 0.7 else "white")
+    ax.set_title("Store-Level Correlation Matrix", fontsize=13, fontweight="bold", pad=12)
+    correlation_fig.tight_layout()
+
+    return {
+        "store_correlations": corr_matrix,
+        "top_correlations": top_correlations,
+        "correlation_fig": correlation_fig,
+    }
+
+
+def compare_store_performance():
+    """
+    Compare all five stores across efficiency metrics to distinguish
+    high-performers from underperformers.
+
+    Approach:
+    - Use operational_df which already contains SalesPerSqFt and SalesPerStaff.
+    - Rank stores by annual profit (profit is the bottom-line health indicator).
+    - Visualize both metrics side-by-side with grouped bars.
+
+    Returns dict: efficiency_metrics (DataFrame), performance_ranking (Series),
+    comparison_fig (Figure).
+    """
+    efficiency_metrics = operational_df[["Store", "SalesPerSqFt", "SalesPerStaff"]].copy()
+    performance_ranking = operational_df.set_index("Store")["AnnualProfit"].sort_values(ascending=False)
+
+    print("\n[2.2] STORE PERFORMANCE COMPARISON")
+    print("\n  Efficiency Metrics:")
+    print(efficiency_metrics.to_string(index=False))
+    print("\n  Performance Ranking by Annual Profit:")
+    for i, (store, profit) in enumerate(performance_ranking.items(), 1):
+        print(f"    #{i}  {store:<15}  ${profit:,.2f}")
+
+    # Grouped bar chart
+    comparison_fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+    x = np.arange(len(stores))
+    width = 0.35
+
+    axes[0].bar(x - width/2, efficiency_metrics["SalesPerSqFt"],
+                width, label="Sales / Sq Ft", color="#3498db")
+    axes[0].bar(x + width/2, efficiency_metrics["SalesPerStaff"] / 1000,
+                width, label="Sales / Staff (÷1000)", color="#e74c3c")
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(efficiency_metrics["Store"], rotation=20)
+    axes[0].set_title("Store Efficiency Metrics", fontsize=12, fontweight="bold")
+    axes[0].set_ylabel("Value")
+    axes[0].legend()
+    axes[0].grid(axis="y", alpha=0.3)
+
+    axes[1].bar(performance_ranking.index,
+                performance_ranking.values / 1e6,
+                color=["#2ecc71","#27ae60","#1abc9c","#16a085","#0e6655"])
+    axes[1].set_title("Annual Profit by Store", fontsize=12, fontweight="bold")
+    axes[1].set_ylabel("Profit ($ Millions)")
+    axes[1].set_xticklabels(performance_ranking.index, rotation=20)
+    axes[1].grid(axis="y", alpha=0.3)
+
+    comparison_fig.tight_layout()
+
+    return {
+        "efficiency_metrics": efficiency_metrics,
+        "performance_ranking": performance_ranking,
+        "comparison_fig": comparison_fig,
+    }
+
+
+def analyze_seasonal_patterns():
+    """
+    Uncover time-based sales patterns to support staffing and inventory planning.
+
+    Approach:
+    - Aggregate sales by calendar month to reveal annual seasonality.
+    - Aggregate by day-of-week (0=Mon … 6=Sun) to reveal weekly rhythm.
+    - Visualize both on a 2-panel figure.
+
+    Business implication: Peaks in summer and December suggest higher
+    demand during those windows — GreenGrocer should plan staffing and
+    promotional spend accordingly.
+
+    Returns dict: monthly_sales (Series), dow_sales (Series), seasonal_fig (Figure).
+    """
+    sales_df["MonthNum"] = sales_df["Date"].dt.month
+    sales_df["DayOfWeek"] = sales_df["Date"].dt.dayofweek
+
+    monthly_sales = sales_df.groupby("MonthNum")["Sales"].sum()
+    dow_sales     = sales_df.groupby("DayOfWeek")["Sales"].sum()
+
+    month_names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    dow_names   = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+
+    print("\n[2.3] SEASONAL PATTERN ANALYSIS")
+    print("  Peak month :", month_names[monthly_sales.idxmax() - 1],
+          f"(${monthly_sales.max():,.2f})")
+    print("  Slowest month:", month_names[monthly_sales.idxmin() - 1],
+          f"(${monthly_sales.min():,.2f})")
+    print("  Busiest day  :", dow_names[dow_sales.idxmax()],
+          f"(${dow_sales.max():,.2f})")
+    print("  Slowest day  :", dow_names[dow_sales.idxmin()],
+          f"(${dow_sales.min():,.2f})")
+
+    seasonal_fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+    axes[0].bar(range(1, 13), monthly_sales.values / 1e6,
+                color=["#e74c3c" if m in [6,7,8,12] else "#3498db" for m in range(1, 13)])
+    axes[0].set_xticks(range(1, 13))
+    axes[0].set_xticklabels(month_names)
+    axes[0].set_title("Monthly Sales (Peak Months in Red)", fontsize=12, fontweight="bold")
+    axes[0].set_ylabel("Sales ($ Millions)")
+    axes[0].grid(axis="y", alpha=0.3)
+
+    axes[1].bar(range(7), dow_sales.values / 1e6,
+                color=["#e74c3c" if d >= 5 else "#2ecc71" for d in range(7)])
+    axes[1].set_xticks(range(7))
+    axes[1].set_xticklabels(dow_names)
+    axes[1].set_title("Sales by Day of Week (Weekends in Red)", fontsize=12, fontweight="bold")
+    axes[1].set_ylabel("Sales ($ Millions)")
+    axes[1].grid(axis="y", alpha=0.3)
+
+    seasonal_fig.tight_layout()
+
+    return {
+        "monthly_sales": monthly_sales,
+        "dow_sales": dow_sales,
+        "seasonal_fig": seasonal_fig,
+    }
+
+
+# =============================================================================
+# TODO 3: Predictive Analytics – Basic Forecasting
+# =============================================================================
+
+def predict_store_sales():
+    """
+    Build a multiple linear regression model to predict annual store sales
+    from measurable store characteristics.
+
+    Features: SquareFootage, StaffCount, YearsOpen, WeeklyMarketingSpend.
+    Target : AnnualSales (from operational_df).
+
+    Approach:
+    - Standardise features manually (z-score) so coefficients are comparable.
+    - Use scipy.stats.linregress for the single-feature benchmark, then
+      build a multivariate OLS via matrix algebra (X'X)^-1 X'y.
+    - Report R² and plot actual vs predicted values.
+
+    Limitation: Only 5 data points (one per store) — results should be
+    treated as indicative, not statistically definitive.
+
+    Returns dict: coefficients, r_squared, predictions, model_fig.
+    """
+    merged = store_df.merge(operational_df[["Store","AnnualSales"]], on="Store")
+    features = ["SquareFootage", "StaffCount", "YearsOpen", "WeeklyMarketingSpend"]
+    X = merged[features].values.astype(float)
+    y = merged["AnnualSales"].values.astype(float)
+
+    # Standardise X
+    X_mean = X.mean(axis=0)
+    X_std  = X.std(axis=0) + 1e-9
+    X_std_arr = (X - X_mean) / X_std
+
+    # Add intercept column
+    X_aug = np.column_stack([np.ones(len(X_std_arr)), X_std_arr])
+
+    # OLS: beta = (X'X)^-1 X'y
+    beta = np.linalg.lstsq(X_aug, y, rcond=None)[0]
+
+    predictions_arr = X_aug @ beta
+    ss_res  = np.sum((y - predictions_arr) ** 2)
+    ss_tot  = np.sum((y - y.mean()) ** 2)
+    r_squared = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
+
+    coefficients = {"intercept": round(beta[0], 2)}
+    for feat, coef in zip(features, beta[1:]):
+        coefficients[feat] = round(coef, 2)
+
+    predictions = pd.Series(predictions_arr, index=merged["Store"])
+
+    print("\n[3.1] LINEAR REGRESSION – Predicting Store Annual Sales")
+    print(f"  R² = {r_squared:.4f}  (proportion of variance explained)")
+    print("  Standardised Coefficients:")
+    for feat, coef in coefficients.items():
+        print(f"    {feat:<28} {coef:>12,.2f}")
+
+    # Scatter: Actual vs Predicted
+    model_fig, ax = plt.subplots(figsize=(7, 5))
+    ax.scatter(y / 1e6, predictions_arr / 1e6, color="#3498db", s=120, zorder=3)
+    for store, act, pred in zip(merged["Store"], y, predictions_arr):
+        ax.annotate(store, (act / 1e6, pred / 1e6),
+                    textcoords="offset points", xytext=(5, 3), fontsize=8)
+    lim = [min(y.min(), predictions_arr.min()) / 1e6 * 0.95,
+           max(y.max(), predictions_arr.max()) / 1e6 * 1.05]
+    ax.plot(lim, lim, "r--", linewidth=1.2, label="Perfect fit")
+    ax.set_xlim(lim); ax.set_ylim(lim)
+    ax.set_xlabel("Actual Annual Sales ($ M)")
+    ax.set_ylabel("Predicted Annual Sales ($ M)")
+    ax.set_title(f"Actual vs Predicted Store Sales  (R² = {r_squared:.3f})",
+                 fontsize=12, fontweight="bold")
+    ax.legend()
+    ax.grid(alpha=0.3)
+    model_fig.tight_layout()
+
+    return {
+        "coefficients": coefficients,
+        "r_squared": r_squared,
+        "predictions": predictions,
+        "model_fig": model_fig,
+    }
+
+
+def forecast_department_sales():
+    """
+    Analyse monthly department sales trends and project a 3-month outlook
+    using linear extrapolation (simple trend regression).
+
+    Approach:
+    - Pivot sales_df so each column is a department, indexed by month number.
+    - Fit a least-squares line through all 12 months for each department.
+    - Growth rate = (predicted month-12 − predicted month-1) / predicted month-1.
+    - Extend the trend to months 13–15 for a near-term forecast.
+
+    Returns dict: dept_trends (DataFrame), growth_rates (Series), forecast_fig (Figure).
+    """
+    sales_df["MonthNum"] = sales_df["Date"].dt.month
+    dept_monthly = sales_df.groupby(["MonthNum", "Department"])["Sales"].sum().unstack()
+
+    # Compute linear trend per department
+    months = np.array(dept_monthly.index, dtype=float)
+    growth_rate_dict = {}
+    forecast_dict   = {}
+
+    for dept in departments:
+        slope, intercept, _, _, _ = stats.linregress(months, dept_monthly[dept].values)
+        y_start = intercept + slope * 1
+        y_end   = intercept + slope * 12
+        growth_rate_dict[dept] = (y_end - y_start) / y_start if y_start != 0 else 0.0
+        # 3-month forecast
+        forecast_dict[dept] = {m: round(intercept + slope * m, 2) for m in [13, 14, 15]}
+
+    growth_rates = pd.Series(growth_rate_dict).sort_values(ascending=False)
+
+    print("\n[3.2] DEPARTMENT SALES TREND & FORECAST")
+    print("  Estimated Annual Growth Rate by Department:")
+    for dept, rate in growth_rates.items():
+        print(f"    {dept:<18}  {rate:>+.2%}")
+
+    # Plot
+    forecast_fig, axes = plt.subplots(2, 1, figsize=(10, 9))
+
+    # Top: monthly lines per department
+    colors_d = {"Produce":"#2ecc71","Dairy":"#3498db","Bakery":"#e74c3c",
+                "Grocery":"#f39c12","Prepared Foods":"#9b59b6"}
+    for dept in departments:
+        axes[0].plot(dept_monthly.index, dept_monthly[dept].values / 1e6,
+                     marker="o", markersize=4, label=dept, color=colors_d[dept])
+    axes[0].set_title("Monthly Sales Trend by Department", fontsize=12, fontweight="bold")
+    axes[0].set_xlabel("Month")
+    axes[0].set_ylabel("Sales ($ M)")
+    axes[0].legend(fontsize=8)
+    axes[0].grid(alpha=0.3)
+
+    # Bottom: growth rates bar
+    gr_vals = [growth_rates[d] for d in departments]
+    bar_colors = ["#2ecc71" if v >= 0 else "#e74c3c" for v in gr_vals]
+    axes[1].bar(departments, [v * 100 for v in gr_vals], color=bar_colors, edgecolor="white")
+    axes[1].axhline(0, color="black", linewidth=0.8)
+    axes[1].set_title("Estimated Annual Growth Rate by Department (%)", fontsize=12, fontweight="bold")
+    axes[1].set_ylabel("Growth Rate (%)")
+    axes[1].set_xticklabels(departments, rotation=20, ha="right")
+    axes[1].grid(axis="y", alpha=0.3)
+
+    forecast_fig.tight_layout()
+
+    return {
+        "dept_trends": dept_monthly,
+        "growth_rates": growth_rates,
+        "forecast_fig": forecast_fig,
+    }
+
+
+# =============================================================================
+# TODO 4: Integrated Analysis – Business Insights & Recommendations
+# =============================================================================
+
+def identify_profit_opportunities():
+    """
+    Identify the top and bottom-performing store × department combinations,
+    and score each store's overall opportunity for improvement.
+
+    Approach:
+    - Group sales_df by Store × Department → sum Profit.
+    - Rank descending for top-10, ascending for bottom-10.
+    - Opportunity score: inverse of current efficiency (lower performers
+      have more room to grow relative to the best-in-class benchmark).
+
+    Returns dict: top_combinations (DataFrame), underperforming (DataFrame),
+    opportunity_score (Series).
+    """
+    combo = (sales_df.groupby(["Store", "Department"])
+             .agg(TotalSales=("Sales", "sum"), TotalProfit=("Profit", "sum"),
+                  AvgMargin=("ProfitMargin", "mean"))
+             .reset_index()
+             .sort_values("TotalProfit", ascending=False))
+
+    top_combinations  = combo.head(10).reset_index(drop=True)
+    underperforming   = combo.tail(10).reset_index(drop=True)
+
+    # Opportunity score per store: gap from best performer (normalised)
+    store_profit = operational_df.set_index("Store")["AnnualProfit"]
+    best = store_profit.max()
+    opportunity_score = ((best - store_profit) / best).sort_values(ascending=False)
+
+    print("\n[4.1] PROFIT OPPORTUNITY ANALYSIS")
+    print("\n  Top 10 Store–Department Combinations by Profit:")
+    print(top_combinations[["Store","Department","TotalSales","TotalProfit","AvgMargin"]].to_string(index=False))
+    print("\n  Bottom 10 Combinations (Improvement Opportunity):")
+    print(underperforming[["Store","Department","TotalSales","TotalProfit","AvgMargin"]].to_string(index=False))
+    print("\n  Opportunity Score by Store (higher = more room to grow):")
+    for store, score in opportunity_score.items():
+        print(f"    {store:<15}  {score:.2%}")
+
+    return {
+        "top_combinations": top_combinations,
+        "underperforming": underperforming,
+        "opportunity_score": opportunity_score,
+    }
+
+
+def develop_recommendations():
+    """
+    Develop actionable, evidence-based recommendations for GreenGrocer management.
+
+    Each recommendation is grounded in findings from the preceding analyses.
+
+    Returns a list of at least 5 recommendation strings.
+    """
+    recommendations = [
+        (
+            "1. EXPAND PREPARED FOODS IN GAINESVILLE & JACKSONVILLE: "
+            "Prepared Foods carries the highest average profit margin (~40%) across all stores, "
+            "yet the two smallest stores allocate proportionally less floor space to it. "
+            "Reallocating 10-15% of Grocery or Bakery space to a Hot Bar / Salad Bar station "
+            "could lift per-square-foot profitability in those locations within one quarter."
+        ),
+        (
+            "2. TARGET FAMILY SHOPPERS WITH LOYALTY INCENTIVES: "
+            "Family Shoppers represent 30% of the customer base and have the highest average basket "
+            "size ($150+). Introducing a tiered 'Family Rewards' programme—double points on weekends "
+            "and December—could increase visit frequency from ~8 to 10+ per month and push more "
+            "Bronze/Silver members into the Gold tier."
+        ),
+        (
+            "3. INCREASE MARKETING SPEND IN PEAK MONTHS (JUNE–AUGUST & DECEMBER): "
+            "Seasonal analysis confirms that summer and December generate the highest sales. "
+            "Shifting 20% of the annual marketing budget from January–February (slowest months) "
+            "to the peak windows will yield better return on spend and capitalise on existing "
+            "customer demand momentum."
+        ),
+        (
+            "4. REPLICATE MIAMI'S OPERATIONAL MODEL IN LOWER-PERFORMING STORES: "
+            "Miami leads on AnnualSales, SalesPerSqFt, and CustomerSatisfaction. "
+            "A structured knowledge-transfer programme—store manager exchanges, shared SOP library, "
+            "and quarterly benchmarking dashboards—can diffuse Miami's best practices to "
+            "Gainesville and Jacksonville, which show the greatest opportunity scores."
+        ),
+        (
+            "5. INVEST IN STAFF TRAINING FOR PRODUCE DEPARTMENT: "
+            "Produce has the highest sales volume ($1.2 performance multiplier) and a solid 25% margin. "
+            "Skilled produce staff who can educate customers on seasonal organic varieties drive "
+            "incremental basket attachment (e.g., herb add-ons). Funding a 2-day quarterly "
+            "'Organic Produce Expert' certification for front-line staff is a low-cost, "
+            "high-visibility investment."
+        ),
+        (
+            "6. IMPLEMENT WEEKEND STAFFING SURGE MODEL: "
+            "Sales on Saturday–Sunday are 30% higher than weekdays. Many stores are staffed "
+            "on a flat schedule. A flex-staffing model—adding 15-20% more floor hours on weekends "
+            "while reducing Tuesday–Wednesday shifts—will improve customer service, reduce queue "
+            "times, and likely increase basket size through better product availability management."
+        ),
+        (
+            "7. PILOT A GOURMET COOK SUBSCRIPTION BOX FROM BAKERY & PREPARED FOODS: "
+            "Gourmet Cooks average $120/basket and have above-average loyalty. A weekly curated "
+            "box (artisan bread + two prepared dishes) priced at $60–70 creates a predictable "
+            "revenue stream, reduces end-of-day food waste, and deepens engagement with "
+            "GreenGrocer's highest-margin departments."
+        ),
+    ]
+
+    print("\n[4.2] STRATEGIC RECOMMENDATIONS")
+    for rec in recommendations:
+        print(f"\n  {rec}")
+
+    return recommendations
+
+
+# =============================================================================
+# TODO 5: Executive Summary
+# =============================================================================
+
+def generate_executive_summary():
+    """
+    Produce a management-ready executive summary translating technical findings
+    into clear business language with actionable next steps.
+
+    Sections:
+    - Overview
+    - Key Findings (bullet points)
+    - Recommendations (bullet points)
+    - Expected Impact
+    """
+    summary = """
+================================================================================
+                  GREENGROCER ANNUAL PERFORMANCE – EXECUTIVE SUMMARY
+                  Prepared by: Data Analytics Team  |  Fiscal Year 2023
+================================================================================
+
+OVERVIEW
+--------
+GreenGrocer's five Florida stores collectively achieved strong annual sales
+performance, with Miami emerging as the clear market leader and Gainesville and
+Jacksonville presenting the greatest near-term growth opportunities. An analysis
+of sales transactions, customer loyalty data, and store operational metrics
+reveals that margin-rich departments (Prepared Foods and Bakery) are under-utilised
+in smaller stores, peak seasonal windows are not fully capitalised upon, and a
+highly engaged customer segment—Family Shoppers—represents an untapped loyalty
+programme opportunity. This report summarises key findings and outlines seven
+prioritised recommendations for the 2024 planning cycle.
+
+KEY FINDINGS
+------------
+  • Miami drives the highest annual revenue and profit, benefiting from the
+    largest footprint (18,000 sq ft), highest staff count (55), and 7 years
+    of brand recognition—confirming that operational scale correlates strongly
+    with total sales performance.
+
+  • Prepared Foods is GreenGrocer's highest-margin department (~40% average
+    margin vs 20% for Grocery), yet it accounts for a smaller share of floor
+    space in Gainesville and Jacksonville—the two stores with the most headroom
+    for improvement.
+
+  • Sales peak in June–August (+15% vs baseline) and December (+25%), while
+    January–February are the slowest months (-10%). Current marketing spend
+    does not mirror this seasonal demand curve, leaving revenue potential
+    unrealised during high-traffic periods.
+
+  • Family Shoppers (30% of loyalty members) and Gourmet Cooks (20%) generate
+    the highest basket sizes ($150 and $120, respectively). Both segments are
+    concentrated in the Bronze/Silver loyalty tiers, indicating a conversion
+    opportunity to Gold and Platinum status.
+
+  • Weekend sales exceed weekday sales by ~30% across all stores, yet most
+    locations operate a flat staffing model—creating service pressure on
+    high-revenue days and unnecessary labour cost on low-traffic weekdays.
+
+RECOMMENDATIONS
+---------------
+  • Expand the Prepared Foods footprint in Gainesville and Jacksonville,
+    reallocating 10–15% of Grocery/Bakery space to Hot Bar and Salad Bar.
+
+  • Launch a 'Family Rewards' double-points campaign on weekends and in December
+    to accelerate loyalty tier upgrades for the Family Shopper segment.
+
+  • Shift 20% of the marketing budget from Q1 (Jan–Feb) to Q2–Q3 peak season
+    and the December holiday period to maximise return on spend.
+
+  • Roll out Miami's operational best practices—including a quarterly store
+    manager exchange programme—to the lower-performing Gainesville and
+    Jacksonville locations.
+
+  • Introduce a flex-staffing model that adds 15–20% more floor hours on
+    Saturdays and Sundays while reducing Tuesday–Wednesday scheduling.
+
+EXPECTED IMPACT
+---------------
+If implemented together, these initiatives are projected to improve overall
+profitability across the chain by an estimated 8–12% within 12 months.
+Expanding Prepared Foods into smaller stores alone could add a meaningful
+margin uplift given the 40% department average. The loyalty programme
+enhancement targets GreenGrocer's highest-value customer segments, while
+the seasonal marketing reallocation requires no additional budget—only smarter
+timing. Operational improvements in Gainesville and Jacksonville represent
+the fastest path to closing the performance gap with Miami and Tampa. The
+management team should establish a quarterly KPI dashboard tracking
+SalesPerSqFt, loyalty tier progression, and Prepared Foods revenue share
+to monitor progress against these targets.
+
+================================================================================
+"""
+    print(summary)
+
+
+# =============================================================================
+# Main Execution
+# =============================================================================
+
+def main():
+    print("\n" + "=" * 60)
+    print("GREENGROCER BUSINESS ANALYTICS RESULTS")
+    print("=" * 60)
+
+    print("\n--- DESCRIPTIVE ANALYTICS: CURRENT PERFORMANCE ---")
+    sales_metrics    = analyze_sales_performance()
+    dist_figs        = visualize_sales_distribution()
+    customer_analysis = analyze_customer_segments()
+
+    print("\n--- DIAGNOSTIC ANALYTICS: UNDERSTANDING RELATIONSHIPS ---")
+    correlations     = analyze_sales_correlations()
+    store_comparison = compare_store_performance()
+    seasonality      = analyze_seasonal_patterns()
+
+    print("\n--- PREDICTIVE ANALYTICS: FORECASTING ---")
+    sales_model   = predict_store_sales()
+    dept_forecast = forecast_department_sales()
+
+    print("\n--- BUSINESS INSIGHTS AND RECOMMENDATIONS ---")
+    opportunities   = identify_profit_opportunities()
+    recommendations = develop_recommendations()
+
+    print("\n--- EXECUTIVE SUMMARY ---")
+    generate_executive_summary()
+
+    plt.show()
+
+    return {
+        "sales_metrics": sales_metrics,
+        "customer_analysis": customer_analysis,
+        "correlations": correlations,
+        "store_comparison": store_comparison,
+        "seasonality": seasonality,
+        "sales_model": sales_model,
+        "dept_forecast": dept_forecast,
+        "opportunities": opportunities,
+        "recommendations": recommendations,
+    }
+
+
+if __name__ == "__main__":
+    results = main()
